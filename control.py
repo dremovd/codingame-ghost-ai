@@ -16,6 +16,7 @@ def read_initial_state():
 
     return factories, factory_count
 
+
 def read_move_state():
     factory_state = {}
     troops_state = []
@@ -45,6 +46,7 @@ def read_move_state():
             troops_state.append((owner, source, target, cyborgs, distance))
     return factory_state, troops_state
 
+
 def format_moves(moves):
     """Output in the form of m_1;m_2;m_3, where m_i is:
         MOVE source_id destination_id count
@@ -56,9 +58,8 @@ def format_moves(moves):
         return "WAIT"
 
 
-minimal_base_troops = 0
+minimal_base_troops = 10
 bombs_count = 2
-
 
 factories, factory_count = read_initial_state()
 
@@ -77,27 +78,27 @@ while True:
                     continue
 
                 how_good = (
-                    other_production > 0, 
+                    other_production > 0,
                     -other_distance + random.random()
                 )
 
                 options.append((how_good, other_factory_id))
-                
-            if cyborgs >= 20 and production < 2:
+
+            if cyborgs >= 10 and production < 3:
                 moves.append("INC %d" % factory_id)
                 continue
             elif options:
                 _, target_id = max(options)
                 target_owner, target_cyborgs, target_production = factory_state[target_id]
-                    
+
                 if bombs_count > 0 and target_owner == -1 and target_cyborgs + target_production * 2 >= 10:
                     moves.append(
                         "BOMB %d %d" % (factory_id, target_id)
                     )
                     bombs_count -= 1
-                else:    
+                else:
                     moves.append(
-                        "MOVE %d %d %d" % (factory_id, target_id, max(0, (cyborgs - minimal_base_troops) / 2))
+                        "MOVE %d %d %d" % (factory_id, target_id, max(0, (production)))
                     )
                     # To our next factory
                 continue
