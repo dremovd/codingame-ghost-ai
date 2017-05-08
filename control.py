@@ -78,7 +78,7 @@ while True:
 
                 how_good = (
                     other_production > 0, 
-                    -distance + random.random()
+                    -other_distance + random.random()
                 )
 
                 options.append((how_good, other_factory_id))
