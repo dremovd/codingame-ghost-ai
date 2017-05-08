@@ -3,26 +3,24 @@ import math
 from collections import defaultdict
 import random
 
-# Auto-generated code below aims at helping you parse
-# the standard input according to the problem statement.
 
-factory_count = int(raw_input())  # the number of factories
+def read_initial_state():
+    factory_count = int(raw_input())  # the number of factories
 
-factories = defaultdict(list)
-link_count = int(raw_input())  # the number of links between factories
-for i in xrange(link_count):
-    factory_1, factory_2, distance = [int(j) for j in raw_input().split()]
-    #print >>sys.stderr, "LINK:", factory_1, factory_2, distance 
-    factories[factory_1].append((factory_2, distance))
-    factories[factory_2].append((factory_1, distance))
+    factories = defaultdict(list)
+    link_count = int(raw_input())  # the number of links between factories
+    for i in xrange(link_count):
+        factory_1, factory_2, distance = [int(j) for j in raw_input().split()]
+        factories[factory_1].append((factory_2, distance))
+        factories[factory_2].append((factory_1, distance))
 
-# game loop
-minimal_base_troops = 0
-bombs_count = 2
-while True:
-    entity_count = int(raw_input())  # the number of entities (e.g. factories and troops)
+    return factories, factory_count
+
+def read_move_state():
     factory_state = {}
     troops_state = []
+    entity_count = int(raw_input())  # the number of entities (e.g. factories and troops)
+
     for i in xrange(entity_count):
         entity_id, entity_type, arg_1, arg_2, arg_3, arg_4, arg_5 = raw_input().split()
         entity_id = int(entity_id)
@@ -31,13 +29,13 @@ while True:
         arg_3 = int(arg_3)
         arg_4 = int(arg_4)
         arg_5 = int(arg_5)
-        
+
         if entity_type == 'FACTORY':
             owner = arg_1
             cyborgs = arg_2
             production = arg_3
             factory_state[entity_id] = owner, cyborgs, production
-            #print >>sys.stderr, 'FACTORY %d: (%d, %d, %d)' % (entity_id, owner, cyborgs, production)
+            # print >>sys.stderr, 'FACTORY %d: (%d, %d, %d)' % (entity_id, owner, cyborgs, production)
         elif entity_type == 'TROOP':
             owner = arg_1
             source = arg_2
@@ -45,27 +43,45 @@ while True:
             cyborgs = arg_4
             distance = arg_5
             troops_state.append((owner, source, target, cyborgs, distance))
-    
+    return factory_state, troops_state
+
+def format_moves(moves):
+    """Output in the form of m_1;m_2;m_3, where m_i is:
+        MOVE source_id destination_id count
+        BOMB source_id destination_id
+        INC factory_id"""
+    if moves:
+        return ";".join(moves)
+    else:
+        return "WAIT"
+
+
+minimal_base_troops = 0
+bombs_count = 2
+
+
+factories, factory_count = read_initial_state()
+
+# game loop
+while True:
+    factory_state, troops_state = read_move_state()
+
     moves = []
     for factory_id, (owner, cyborgs, production) in factory_state.iteritems():
         if owner == 1:
             options = []
-            #print >>sys.stderr, factories[factory_id]
-            for other_factoty_id, other_distance in factories[factory_id]:
-                other_owner, other_cyborgs, other_production = factory_state[other_factoty_id]
-                #print >>sys.stderr, factories[factory_id]
+            for other_factory_id, other_distance in factories[factory_id]:
+                other_owner, other_cyborgs, other_production = factory_state[other_factory_id]
 
                 if other_owner == 1:
                     continue
-                
-                
-                #how_good = (other_production > 0, other_owner == 0, float(other_production) / (1 + other_cyborgs), -other_cyborgs)
+
                 how_good = (
                     other_production > 0, 
                     -distance + random.random()
                 )
 
-                options.append((how_good, other_factoty_id))
+                options.append((how_good, other_factory_id))
                 
             if cyborgs >= 20 and production < 2:
                 moves.append("INC %d" % factory_id)
@@ -85,10 +101,5 @@ while True:
                     )
                     # To our next factory
                 continue
-    # Any valid action, such as "WAIT" or "MOVE source destination cyborgs"
 
-    if moves:
-        print ";".join(moves)
-    else:
-        print "WAIT"
-        
+    print format_moves(moves)
