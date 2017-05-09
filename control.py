@@ -64,24 +64,37 @@ bombs_count = 2
 
 factories, factory_count = read_initial_state()
 
-def factory_score(factory_state, factory_id):
-    owner, cyborgs, production, start_production_in = factory_state[factory_id]
-    if owner < 1:
+
+def factory_score(owner, cyborgs, production, start_production_in):
+    if owner == 0:
         return production * 11 - cyborgs
+    elif owner == -1:
+        return production * 8 - cyborgs
     elif owner == 1:
-        return production * 15 * (cyborgs < minimal_base_troops)
+        return production * 11 * (cyborgs - minimal_base_troops)
+
+
+def factory_scores(factory_state):
+    scores = {}
+    for factory_id, (owner, cyborgs, production, start_production_in) in factory_state.iteritems():
+        scores[factory_id] = factory_score(owner, cyborgs, production, start_production_in)
+    return scores
+
 
 # game loop
 while True:
     factory_state, troop_state = read_move_state()
-
+    scores = factory_scores(factory_state)
     moves = []
+
     for factory_id, (owner, cyborgs, production, start_production_in) in factory_state.iteritems():
         if owner == 1:
             options = []
             for other_factory_id, distance in factories[factory_id]:
-                score = factory_score(factory_state, other_factory_id)
-                options.append(((score - distance), other_factory_id))
+                score = scores[other_factory_id]
+                options.append(
+                    ((score, -distance), other_factory_id)
+                )
 
             if cyborgs >= 10 and production < 3:
                 moves.append("INC %d" % factory_id)
@@ -95,7 +108,7 @@ while True:
                         "BOMB %d %d" % (factory_id, target_id)
                     )
                     bombs_count -= 1
-                else:
+                elif score > 0:
                     moves.append(
                         "MOVE %d %d %d" % (factory_id, target_id, max(0, (production)))
                     )
