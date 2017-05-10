@@ -61,6 +61,7 @@ def format_moves(moves):
 
 minimal_base_troops = 10
 bombs_count = 2
+min_inc_cyborgs = 20
 
 factories, factory_count = read_initial_state()
 
@@ -71,13 +72,15 @@ def factory_score(owner, cyborgs, production, start_production_in):
     elif owner == -1:
         return production * 8 - cyborgs
     elif owner == 1:
-        return production * 11 * (cyborgs - minimal_base_troops)
+        return production * 11 * (cyborgs < minimal_base_troops)
 
 
 def factory_scores(factory_state):
     scores = {}
     for factory_id, (owner, cyborgs, production, start_production_in) in factory_state.iteritems():
         scores[factory_id] = factory_score(owner, cyborgs, production, start_production_in)
+    for k, v in scores.items():
+        print >> sys.stderr, k, v
     return scores
 
 
@@ -96,7 +99,7 @@ while True:
                     ((score, -distance), other_factory_id)
                 )
 
-            if cyborgs >= 10 and production < 3:
+            if cyborgs >= min_inc_cyborgs and production < 3:
                 moves.append("INC %d" % factory_id)
                 continue
             elif options:
@@ -108,7 +111,7 @@ while True:
                         "BOMB %d %d" % (factory_id, target_id)
                     )
                     bombs_count -= 1
-                elif score > 0:
+                elif score > scores[factory_id]:
                     moves.append(
                         "MOVE %d %d %d" % (factory_id, target_id, max(0, (production)))
                     )
